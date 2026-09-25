@@ -15,34 +15,34 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 ## Backend (NestJS)
 
 **Project scaffolding**
-- [ ] `nest new backend` scaffold, wired into the workspace
-- [ ] `@nestjs/config` for env vars
+- [x] `nest new backend` scaffold, wired into the workspace
+- [x] `@nestjs/config` for env vars
 - [ ] `Dockerfile` for backend service
 
 **Data model (Prisma + PostgreSQL)**
-- [ ] `User` model: `id`, `email` (unique), `passwordHash`, `phone` (nullable), `verified` (bool, default false), `failedLoginAttempts`, `lockedUntil` (nullable), `createdAt`, `updatedAt`
-- [ ] `VerificationToken` and `PasswordResetToken` (or fields on `User`): token, `expiresAt`
-- [ ] Initial Prisma migration
-- [ ] `PrismaService`/`PrismaModule`
+- [x] `User` model: `id`, `email` (unique), `passwordHash`, `phone` (nullable), `verified` (bool, default false), `failedLoginAttempts`, `lockedUntil` (nullable), `createdAt`, `updatedAt`
+- [x] `VerificationToken` and `PasswordResetToken` (or fields on `User`): token, `expiresAt`
+- [x] Initial Prisma migration
+- [x] `PrismaService`/`PrismaModule`
 
 **Auth module**
-- [ ] `POST /auth/register` — validate email/password/phone(optional), hash password (bcrypt), create unverified `User`, generate verification token, send verification email
-- [ ] `GET /auth/verify-email?token=...` — validate token + expiry, mark `User.verified = true`
-- [ ] `POST /auth/login` — reject unverified users; check `Lockout` state; verify password; on repeated failures increment `failedLoginAttempts` and set `lockedUntil` past threshold; issue JWT (Bearer, per ADR-0001) on success
-- [ ] `POST /auth/forgot-password` — generate reset token, email reset link (always respond generically to avoid email enumeration)
-- [ ] `POST /auth/reset-password` — validate reset token + expiry, update `passwordHash`, invalidate token
-- [ ] `JwtStrategy` + `JwtAuthGuard` for protected routes
-- [ ] Rate limiting via `@nestjs/throttler` on `/auth/login`, `/auth/register`, `/auth/forgot-password`
-- [ ] DTOs + `class-validator` rules for all auth endpoints
+- [x] `POST /auth/register` — validate email/password/phone(optional), hash password (bcrypt), create unverified `User`, generate verification token, send verification email
+- [x] `GET /auth/verify-email?token=...` — validate token + expiry, mark `User.verified = true`
+- [x] `POST /auth/login` — reject unverified users; check `Lockout` state; verify password; on repeated failures increment `failedLoginAttempts` and set `lockedUntil` past threshold; issue JWT (Bearer, per ADR-0001) on success
+- [x] `POST /auth/forgot-password` — generate reset token, email reset link (always respond generically to avoid email enumeration)
+- [x] `POST /auth/reset-password` — validate reset token + expiry, update `passwordHash`, invalidate token
+- [x] `JwtStrategy` + `JwtAuthGuard` for protected routes
+- [x] Rate limiting via `@nestjs/throttler` on `/auth/login`, `/auth/register`, `/auth/forgot-password`
+- [x] DTOs + `class-validator` rules for all auth endpoints
 
 **Mail**
-- [ ] `MailService` (nodemailer) pointed at MailHog SMTP in dev
-- [ ] Verification email template (link with token)
-- [ ] Password reset email template (link with token)
+- [x] `MailService` (nodemailer) pointed at MailHog SMTP in dev
+- [x] Verification email template (link with token)
+- [x] Password reset email template (link with token)
 
 **Cross-cutting**
-- [ ] CORS configured for frontend origin
-- [ ] Global validation pipe + exception filter (consistent error shape)
+- [x] CORS configured for frontend origin
+- [x] Global validation pipe + exception filter (consistent error shape)
 
 ## Frontend (React + TypeScript + Tailwind)
 
