@@ -47,9 +47,9 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 ## Frontend (React + TypeScript + Tailwind)
 
 **Project scaffolding**
-- [ ] Vite + React + TypeScript project
-- [ ] Tailwind CSS setup
-- [ ] `Dockerfile` for frontend service
+- [x] Vite + React + TypeScript project
+- [x] Tailwind CSS setup
+- [x] `Dockerfile` for frontend service
 - [ ] API client wrapper that attaches JWT from `localStorage` as `Authorization: Bearer <token>` (per ADR-0001)
 
 **Auth state**
