@@ -53,8 +53,8 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 - [x] API client wrapper that attaches JWT from `localStorage` as `Authorization: Bearer <token>` (per ADR-0001)
 
 **Auth state**
-- [ ] `AuthContext`/hook: holds token + current user, persists token to `localStorage`, exposes login/logout
-- [ ] `ProtectedRoute` wrapper redirecting unauthenticated users to `/login`
+- [x] `AuthContext`/hook: holds token + current user, persists token to `localStorage`, exposes login/logout
+- [x] `ProtectedRoute` wrapper redirecting unauthenticated users to `/login`
 
 **Pages**
 - [ ] `Register` — email, password, phone (optional); calls `POST /auth/register`; shows "check your email" state
