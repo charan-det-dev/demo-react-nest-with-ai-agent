@@ -32,7 +32,7 @@ export function ResetPassword() {
 
     setSubmitting(true)
     try {
-      await resetPassword({ token, password })
+      await resetPassword({ token, newPassword: password })
       setDone(true)
     } catch (err) {
       setError(

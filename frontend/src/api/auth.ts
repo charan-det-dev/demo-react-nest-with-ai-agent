@@ -29,15 +29,9 @@ export type LoginPayload = {
   password: string
 }
 
-/**
- * The backend's exact JWT field name isn't pinned down by Tasks.md; NestJS's
- * own docs use `access_token`. Accept the common variants defensively so a
- * naming choice on the backend side doesn't silently break login.
- */
+/** Matches `AuthService.login`'s return shape (backend/src/auth/auth.service.ts). */
 type LoginResponse = {
-  access_token?: string
   accessToken?: string
-  token?: string
 }
 
 export async function login(payload: LoginPayload): Promise<string> {
@@ -46,7 +40,7 @@ export async function login(payload: LoginPayload): Promise<string> {
     body: payload,
     auth: false,
   })
-  const token = data.access_token ?? data.accessToken ?? data.token
+  const token = data.accessToken
   if (!token) {
     throw new Error('ไม่พบ token การเข้าสู่ระบบในคำตอบจากเซิร์ฟเวอร์')
   }
@@ -59,7 +53,9 @@ export async function forgotPassword(email: string): Promise<void> {
 
 export type ResetPasswordPayload = {
   token: string
-  password: string
+  /** Field name must be `newPassword` — matches ResetPasswordDto on the
+   *  backend (backend/src/auth/dto/reset-password.dto.ts). */
+  newPassword: string
 }
 
 export async function resetPassword(payload: ResetPasswordPayload): Promise<void> {

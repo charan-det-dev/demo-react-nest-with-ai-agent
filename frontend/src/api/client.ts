@@ -12,11 +12,17 @@ const API_BASE_URL: string =
 
 export class ApiError extends Error {
   status: number
+  /** The `error` field Nest's exception filter sends alongside `message`
+   *  (e.g. `EMAIL_NOT_VERIFIED`, `ACCOUNT_LOCKED`) — a stable code to branch
+   *  on, when the backend provides one, instead of matching on `message`
+   *  text. */
+  code?: string
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -41,6 +47,14 @@ function extractErrorMessage(body: unknown, fallback: string): string {
     if (Array.isArray(message)) return message.filter((m) => typeof m === 'string').join(', ')
   }
   return fallback
+}
+
+function extractErrorCode(body: unknown): string | undefined {
+  if (body && typeof body === 'object' && 'error' in body) {
+    const code = (body as { error?: unknown }).error
+    if (typeof code === 'string') return code
+  }
+  return undefined
 }
 
 type RequestOptions = {
@@ -82,7 +96,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const data = text ? (JSON.parse(text) as unknown) : undefined
 
   if (!response.ok) {
-    throw new ApiError(extractErrorMessage(data, 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'), response.status)
+    throw new ApiError(
+      extractErrorMessage(data, 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
+      response.status,
+      extractErrorCode(data),
+    )
   }
 
   return data as T

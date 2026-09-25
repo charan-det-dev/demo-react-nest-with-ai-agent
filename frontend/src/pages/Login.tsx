@@ -2,9 +2,10 @@
 // verified" and "locked out" (Lockout) as distinct messages, not a generic
 // one (per Tasks.md > Frontend > Pages).
 //
-// The backend doesn't pin down exact error text, so this classifies the
-// message it gets back by keyword. If the backend's wording changes, update
-// the keyword lists below rather than the rest of the page.
+// Classified primarily by the stable `error` code AuthService.login sends
+// (backend/src/auth/auth.service.ts): `EMAIL_NOT_VERIFIED` / `ACCOUNT_LOCKED`.
+// Falls back to matching the message text for safety if the code is ever
+// missing (e.g. a network-level 401 with no body).
 
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -21,13 +22,16 @@ function classifyLoginError(err: unknown): { kind: LoginErrorKind; message: stri
   }
 
   const lower = err.message.toLowerCase()
-  if (lower.includes('verif')) {
+  const isNotVerified = err.code === 'EMAIL_NOT_VERIFIED' || lower.includes('verif')
+  const isLockedOut = err.code === 'ACCOUNT_LOCKED' || lower.includes('lock')
+
+  if (isNotVerified) {
     return {
       kind: 'not-verified',
       message: 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล (Verification) กรุณาตรวจสอบอีเมลของคุณก่อนเข้าสู่ระบบ',
     }
   }
-  if (lower.includes('lock')) {
+  if (isLockedOut) {
     return {
       kind: 'locked-out',
       message: 'บัญชีนี้ถูกล็อกชั่วคราว (Lockout) เนื่องจากเข้าสู่ระบบผิดพลาดหลายครั้ง กรุณาลองใหม่ภายหลัง',
