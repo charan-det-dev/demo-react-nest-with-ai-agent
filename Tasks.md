@@ -7,7 +7,7 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 ## Setup
 
 - [x] Root `package.json` with npm workspaces (`frontend`, `backend`)
-- [ ] `.env.example` (DB connection string, JWT secret, SMTP host/port for MailHog, token expiry settings)
+- [x] `.env.example` (DB connection string, JWT secret, SMTP host/port for MailHog, token expiry settings)
 - [ ] `docker-compose.yml`: `postgres`, `mailhog`, `backend`, `frontend` services
 - [ ] `.gitignore` (node_modules, dist, .env, Prisma generated client)
 - [ ] Root `README.md` with setup/run instructions
