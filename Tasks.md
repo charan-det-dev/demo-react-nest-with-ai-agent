@@ -71,8 +71,8 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 
 **Automated tests (backend unit tests, per grilling decision)**
 - [x] `AuthService.register` — creates unverified user, hashes password, does not store phone... (covers phone optional both provided/omitted)
-- [ ] `AuthService.verifyEmail` — valid token verifies user; expired/invalid token rejected
-- [ ] `AuthService.login` — rejects unverified user; rejects wrong password; issues JWT on success
+- [x] `AuthService.verifyEmail` — valid token verifies user; expired/invalid token rejected
+- [x] `AuthService.login` — rejects unverified user; rejects wrong password; issues JWT on success
 - [ ] `AuthService.login` lockout — N failed attempts locks the account; locked account rejected even with correct password until `lockedUntil` passes
 - [ ] `AuthService.forgotPassword` / `resetPassword` — valid token resets password; expired/invalid token rejected; old password stops working after reset
 
