@@ -78,9 +78,9 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 
 **Manual / end-to-end verification**
 - [ ] Full flow: register → receive email in MailHog → verify → login → access protected `Home`
-- [ ] Attempt login before verifying email → rejected with correct message
-- [ ] Trigger lockout by repeated bad logins → confirm locked message, confirm unlock after cooldown
+- [x] Attempt login before verifying email → rejected with correct message
+- [x] Trigger lockout by repeated bad logins → confirm locked message, confirm unlock after cooldown
 - [ ] Forgot password → reset via MailHog link → old password no longer works, new one does
 - [ ] `docker-compose up` brings up frontend, backend, Postgres, MailHog together cleanly from a clean checkout
-- [ ] CORS: frontend (separate origin) can call backend API without errors
-- [ ] Responsive check of all pages (mobile width) since Tailwind is in use
+- [x] CORS: frontend (separate origin) can call backend API without errors
+- [x] Responsive check of all pages (mobile width) since Tailwind is in use
