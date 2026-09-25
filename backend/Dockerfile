@@ -20,4 +20,7 @@ COPY --from=build /app/backend/package.json ./backend/package.json
 COPY --from=build /app/backend/prisma ./backend/prisma
 
 EXPOSE 3000
-CMD ["node", "backend/dist/main.js"]
+# Apply pending Prisma migrations against the real database before starting
+# the app — a fresh `docker compose up` from a clean checkout has no schema
+# yet, and the app would 500 on every request without this.
+CMD ["sh", "-c", "cd backend && npx prisma migrate deploy && node dist/main.js"]
