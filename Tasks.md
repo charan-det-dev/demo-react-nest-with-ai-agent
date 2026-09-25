@@ -57,12 +57,12 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 - [x] `ProtectedRoute` wrapper redirecting unauthenticated users to `/login`
 
 **Pages**
-- [ ] `Register` — email, password, phone (optional); calls `POST /auth/register`; shows "check your email" state
-- [ ] `VerifyEmail` — reads token from URL, calls `GET /auth/verify-email`, shows result
-- [ ] `Login` — email/password; surfaces "not verified" and "locked out" error states distinctly
-- [ ] `ForgotPassword` — email input, calls `POST /auth/forgot-password`
-- [ ] `ResetPassword` — reads token from URL, new password form, calls `POST /auth/reset-password`
-- [ ] `Home` (protected) — simple landing page after login
+- [x] `Register` — email, password, phone (optional); calls `POST /auth/register`; shows "check your email" state
+- [x] `VerifyEmail` — reads token from URL, calls `GET /auth/verify-email`, shows result
+- [x] `Login` — email/password; surfaces "not verified" and "locked out" error states distinctly
+- [x] `ForgotPassword` — email input, calls `POST /auth/forgot-password`
+- [x] `ResetPassword` — reads token from URL, new password form, calls `POST /auth/reset-password`
+- [x] `Home` (protected) — simple landing page after login
 
 **Routing**
 - [ ] Router wiring all pages above, protected route for `Home`

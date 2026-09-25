@@ -1,0 +1,80 @@
+// VerifyEmail page: reads `token` from the URL query, calls
+// GET /auth/verify-email, and shows the result (per Tasks.md > Frontend > Pages).
+
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { verifyEmail } from '../api/auth'
+import { ApiError } from '../api/client'
+import { AuthLayout } from '../components/AuthLayout'
+
+type Status = 'verifying' | 'success' | 'error'
+
+export function VerifyEmail() {
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token')
+  const [status, setStatus] = useState<Status>('verifying')
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) {
+      setStatus('error')
+      setError('ไม่พบ token สำหรับยืนยันอีเมลใน URL')
+      return
+    }
+
+    let cancelled = false
+    verifyEmail(token)
+      .then(() => {
+        if (!cancelled) setStatus('success')
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setStatus('error')
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'ยืนยันอีเมลไม่สำเร็จ ลิงก์อาจหมดอายุหรือไม่ถูกต้อง',
+        )
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  return (
+    <AuthLayout title="ยืนยันอีเมล (Verification)">
+      {status === 'verifying' && (
+        <p className="text-center text-sm text-slate-600">กำลังยืนยันอีเมลของคุณ...</p>
+      )}
+
+      {status === 'success' && (
+        <>
+          <p className="rounded-md bg-green-50 px-3 py-2 text-center text-sm text-green-700">
+            ยืนยันอีเมลสำเร็จแล้ว ตอนนี้คุณสามารถเข้าสู่ระบบได้
+          </p>
+          <Link
+            to="/login"
+            className="mt-6 block text-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            ไปหน้าเข้าสู่ระบบ
+          </Link>
+        </>
+      )}
+
+      {status === 'error' && (
+        <>
+          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+            {error}
+          </p>
+          <Link
+            to="/register"
+            className="mt-6 block text-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            กลับไปหน้าสมัครสมาชิก
+          </Link>
+        </>
+      )}
+    </AuthLayout>
+  )
+}
