@@ -1,5 +1,8 @@
 # Dev-mode Dockerfile: runs the Vite dev server (matches docker-compose.yml,
 # which maps port 5173 and passes VITE_API_URL at runtime).
+#
+# Build context is ./frontend (see docker-compose.yml) — self-contained,
+# independent of the backend's root-context build.
 FROM node:20-alpine
 
 WORKDIR /app
