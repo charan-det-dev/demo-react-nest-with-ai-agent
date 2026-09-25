@@ -285,4 +285,85 @@ describe('AuthService', () => {
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
+
+  describe('login lockout', () => {
+    async function buildUser(overrides: Record<string, any> = {}) {
+      const password = overrides.plainPassword ?? 'correct-password';
+      const passwordHash = await bcrypt.hash(password, 4);
+      return {
+        id: 'user-1',
+        email: 'user@example.com',
+        passwordHash,
+        phone: null,
+        verified: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        ...overrides,
+      };
+    }
+
+    it('locks the account on the 5th consecutive failed attempt', async () => {
+      // 4 prior failures; this wrong-password attempt is the 5th
+      const user = await buildUser({ failedLoginAttempts: 4 });
+      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.update.mockResolvedValue(user);
+
+      const attempt = authService.login({ email: user.email, password: 'wrong-password' } as any);
+
+      await expect(attempt).rejects.toBeInstanceOf(ForbiddenException);
+      await attempt.catch((err) => {
+        expect(err.getResponse()).toMatchObject({ error: 'ACCOUNT_LOCKED' });
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledTimes(1);
+      const updateArgs = prisma.user.update.mock.calls[0][0];
+      expect(updateArgs.where).toEqual({ id: user.id });
+      expect(updateArgs.data.failedLoginAttempts).toBe(0);
+      expect(updateArgs.data.lockedUntil).toBeInstanceOf(Date);
+      expect(updateArgs.data.lockedUntil.getTime()).toBeGreaterThan(Date.now());
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('rejects a locked account even with the correct password while lockedUntil is in the future', async () => {
+      const user = await buildUser({
+        failedLoginAttempts: 0,
+        lockedUntil: new Date(Date.now() + 15 * 60 * 1000),
+      });
+      prisma.user.findUnique.mockResolvedValue(user);
+
+      const attempt = authService.login({
+        email: user.email,
+        password: 'correct-password',
+      } as any);
+
+      await expect(attempt).rejects.toBeInstanceOf(ForbiddenException);
+      await attempt.catch((err) => {
+        expect(err.getResponse()).toMatchObject({ error: 'ACCOUNT_LOCKED' });
+      });
+
+      // rejected before password verification / any write occurs
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('allows login with the correct password and clears the lock once lockedUntil has passed', async () => {
+      const user = await buildUser({
+        failedLoginAttempts: 0,
+        lockedUntil: new Date(Date.now() - 60_000), // cooldown already elapsed
+      });
+      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.update.mockResolvedValue({ ...user, failedLoginAttempts: 0, lockedUntil: null });
+
+      const result = await authService.login({
+        email: user.email,
+        password: 'correct-password',
+      } as any);
+
+      expect(result.accessToken).toBe('signed.jwt.token');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
+    });
+  });
 });
