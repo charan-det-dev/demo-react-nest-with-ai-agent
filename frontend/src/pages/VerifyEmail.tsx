@@ -1,7 +1,7 @@
 // VerifyEmail page: reads `token` from the URL query, calls
 // GET /auth/verify-email, and shows the result (per Tasks.md > Frontend > Pages).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { verifyEmail } from '../api/auth'
 import { ApiError } from '../api/client'
@@ -15,20 +15,27 @@ export function VerifyEmail() {
   const [status, setStatus] = useState<Status>('verifying')
   const [error, setError] = useState<string | null>(null)
 
+  // The verification token is consume-once on the backend (it's deleted
+  // after the first successful use), but <StrictMode> double-invokes this
+  // effect in dev, which would send the request twice and turn the second,
+  // now-invalid attempt into a false "expired" error. Guard by token so the
+  // request only ever actually fires once per token, instead of using a
+  // cancellation flag that would just as wrongly discard the *first* (real)
+  // response when StrictMode's synchronous cleanup runs before it resolves.
+  const requestedTokenRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!token) {
       setStatus('error')
       setError('ไม่พบ token สำหรับยืนยันอีเมลใน URL')
       return
     }
+    if (requestedTokenRef.current === token) return
+    requestedTokenRef.current = token
 
-    let cancelled = false
     verifyEmail(token)
-      .then(() => {
-        if (!cancelled) setStatus('success')
-      })
+      .then(() => setStatus('success'))
       .catch((err: unknown) => {
-        if (cancelled) return
         setStatus('error')
         setError(
           err instanceof ApiError
@@ -36,10 +43,6 @@ export function VerifyEmail() {
             : 'ยืนยันอีเมลไม่สำเร็จ ลิงก์อาจหมดอายุหรือไม่ถูกต้อง',
         )
       })
-
-    return () => {
-      cancelled = true
-    }
   }, [token])
 
   return (
