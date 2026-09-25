@@ -50,7 +50,7 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 - [x] Vite + React + TypeScript project
 - [x] Tailwind CSS setup
 - [x] `Dockerfile` for frontend service
-- [ ] API client wrapper that attaches JWT from `localStorage` as `Authorization: Bearer <token>` (per ADR-0001)
+- [x] API client wrapper that attaches JWT from `localStorage` as `Authorization: Bearer <token>` (per ADR-0001)
 
 **Auth state**
 - [ ] `AuthContext`/hook: holds token + current user, persists token to `localStorage`, exposes login/logout
