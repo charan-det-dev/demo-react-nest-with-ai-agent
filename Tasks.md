@@ -17,7 +17,7 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 **Project scaffolding**
 - [x] `nest new backend` scaffold, wired into the workspace
 - [x] `@nestjs/config` for env vars
-- [ ] `Dockerfile` for backend service
+- [x] `Dockerfile` for backend service
 
 **Data model (Prisma + PostgreSQL)**
 - [x] `User` model: `id`, `email` (unique), `passwordHash`, `phone` (nullable), `verified` (bool, default false), `failedLoginAttempts`, `lockedUntil` (nullable), `createdAt`, `updatedAt`
