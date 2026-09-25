@@ -366,4 +366,105 @@ describe('AuthService', () => {
       });
     });
   });
+
+  describe('forgotPassword', () => {
+    it('creates a reset token and emails it when the account exists', async () => {
+      const user = { id: 'user-1', email: 'user@example.com' };
+      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.passwordResetToken.create.mockResolvedValue(undefined);
+
+      const result = await authService.forgotPassword({ email: user.email } as any);
+
+      expect(prisma.passwordResetToken.create).toHaveBeenCalledTimes(1);
+      const tokenArgs = prisma.passwordResetToken.create.mock.calls[0][0];
+      expect(tokenArgs.data.userId).toBe(user.id);
+      expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        user.email,
+        tokenArgs.data.token,
+      );
+      expect(result).toEqual({
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      });
+    });
+
+    it('returns the same generic message and does nothing when the account does not exist (no email enumeration)', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await authService.forgotPassword({
+        email: 'nobody@example.com',
+      } as any);
+
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+      expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      });
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('resets the password, clears lockout state, and invalidates the token when valid', async () => {
+      const oldPasswordHash = await bcrypt.hash('old-password', 4);
+      const futureExpiry = new Date(Date.now() + 60_000);
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'reset-token-1',
+        token: 'valid-reset-token',
+        userId: 'user-1',
+        expiresAt: futureExpiry,
+      });
+      prisma.user.update.mockResolvedValue(undefined);
+      prisma.passwordResetToken.deleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await authService.resetPassword({
+        token: 'valid-reset-token',
+        newPassword: 'new-password',
+      } as any);
+
+      expect(prisma.user.update).toHaveBeenCalledTimes(1);
+      const updateArgs = prisma.user.update.mock.calls[0][0];
+      expect(updateArgs.where).toEqual({ id: 'user-1' });
+      expect(updateArgs.data.failedLoginAttempts).toBe(0);
+      expect(updateArgs.data.lockedUntil).toBeNull();
+
+      // new password works, old password no longer matches the new hash
+      const newHash = updateArgs.data.passwordHash;
+      expect(newHash).not.toBe(oldPasswordHash);
+      await expect(bcrypt.compare('new-password', newHash)).resolves.toBe(true);
+      await expect(bcrypt.compare('old-password', newHash)).resolves.toBe(false);
+
+      expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+      expect(result).toEqual({ message: 'Password has been reset successfully.' });
+    });
+
+    it('rejects an unknown reset token without updating the user', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValue(null);
+
+      await expect(
+        authService.resetPassword({ token: 'unknown', newPassword: 'new-password' } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.passwordResetToken.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects an expired reset token without updating the user', async () => {
+      const pastExpiry = new Date(Date.now() - 60_000);
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'reset-token-2',
+        token: 'expired-reset-token',
+        userId: 'user-1',
+        expiresAt: pastExpiry,
+      });
+
+      await expect(
+        authService.resetPassword({
+          token: 'expired-reset-token',
+          newPassword: 'new-password',
+        } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.passwordResetToken.deleteMany).not.toHaveBeenCalled();
+    });
+  });
 });
