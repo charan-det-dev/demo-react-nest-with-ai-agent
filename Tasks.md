@@ -65,7 +65,7 @@ Stack: React + TypeScript + Tailwind (frontend) · NestJS + Prisma + PostgreSQL 
 - [x] `Home` (protected) — simple landing page after login
 
 **Routing**
-- [ ] Router wiring all pages above, protected route for `Home`
+- [x] Router wiring all pages above, protected route for `Home`
 
 ## QA
 
