@@ -210,4 +210,79 @@ describe('AuthService', () => {
       expect(prisma.verificationToken.deleteMany).not.toHaveBeenCalled();
     });
   });
+
+  describe('login', () => {
+    async function buildUser(overrides: Record<string, any> = {}) {
+      const password = overrides.plainPassword ?? 'correct-password';
+      const passwordHash = await bcrypt.hash(password, 4);
+      return {
+        id: 'user-1',
+        email: 'user@example.com',
+        passwordHash,
+        phone: null,
+        verified: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        ...overrides,
+      };
+    }
+
+    it('rejects login for an unknown email', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        authService.login({ email: 'nobody@example.com', password: 'whatever' } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('rejects login for an unverified user without checking the password', async () => {
+      const user = await buildUser({ verified: false });
+      prisma.user.findUnique.mockResolvedValue(user);
+
+      const attempt = authService.login({ email: user.email, password: 'correct-password' } as any);
+
+      await expect(attempt).rejects.toBeInstanceOf(ForbiddenException);
+      await attempt.catch((err) => {
+        expect(err.getResponse()).toMatchObject({ error: 'EMAIL_NOT_VERIFIED' });
+      });
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects login with the wrong password and records a failed attempt', async () => {
+      const user = await buildUser({ failedLoginAttempts: 0 });
+      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.update.mockResolvedValue({ ...user, failedLoginAttempts: 1 });
+
+      await expect(
+        authService.login({ email: user.email, password: 'wrong-password' } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 1, lockedUntil: null },
+      });
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('issues a JWT and returns the public user on successful login', async () => {
+      const user = await buildUser();
+      prisma.user.findUnique.mockResolvedValue(user);
+
+      const result = await authService.login({
+        email: user.email,
+        password: 'correct-password',
+      } as any);
+
+      expect(jwtService.signAsync).toHaveBeenCalledWith({ sub: user.id, email: user.email });
+      expect(result).toEqual({
+        accessToken: 'signed.jwt.token',
+        tokenType: 'Bearer',
+        user: { id: user.id, email: user.email, phone: user.phone, verified: true },
+      });
+      // no prior failures/lock to clear, so no extra write is needed
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
 });
